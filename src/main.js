@@ -1,15 +1,35 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-// Derive __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Store all windows
 const windows = [];
+let mainWindow;
 
-const createWindows = async () => {
+const createMainWindow = () => {
+  mainWindow = new BrowserWindow({
+    width: 300,
+    height: 50,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  mainWindow.loadURL(
+    new URL(`file://${path.join(__dirname, '../public/main.html')}`).href
+  );
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+    closeGameWindows();
+    app.quit();
+  });
+};
+
+const createGameWindows = async () => {
   const { screen } = await import('electron');
   const displays = screen.getAllDisplays();
 
@@ -30,14 +50,17 @@ const createWindows = async () => {
     );
 
     windows.push({ window, displayId: index, bounds: display.bounds });
-  });
 
-  // Share window info with renderer processes
-  windows.forEach(({ window }) => {
+    window.on('closed', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.close(); // Close main window to trigger full exit
+      }
+    });
+
     window.webContents.on('did-finish-load', () => {
       window.webContents.send('display-info', {
         displays: windows.map(w => ({ id: w.displayId, bounds: w.bounds })),
-        currentDisplayId: windows.find(w => w.window === window).displayId,
+        currentDisplayId: index,
       });
     });
   });
@@ -45,9 +68,25 @@ const createWindows = async () => {
   return windows;
 };
 
+const closeGameWindows = () => {
+  while (windows.length > 0) {
+    const { window } = windows.pop();
+    if (!window.isDestroyed()) window.close();
+  }
+};
+
 app.whenReady().then(() => {
-  createWindows().catch(err => {
-    throw new Error(`Failed to create windows: ${err}`);
+  createMainWindow();
+  createGameWindows().catch(err => {
+    throw new Error(`Failed to create game windows: ${err}`);
+  });
+
+  ipcMain.on('update-player-position', (event, { x, y }) => {
+    windows.forEach(({ window }) => {
+      if (!window.isDestroyed()) {
+        window.webContents.send('player-position', { x, y });
+      }
+    });
   });
 
   app.on('window-all-closed', () => {
@@ -56,8 +95,9 @@ app.whenReady().then(() => {
 });
 
 app.on('activate', () => {
-  if (windows.length === 0) {
-    createWindows().catch(err => {
+  if (!mainWindow) {
+    createMainWindow();
+    createGameWindows().catch(err => {
       throw new Error(`Failed to recreate windows: ${err}`);
     });
   }

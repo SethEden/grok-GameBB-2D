@@ -1,6 +1,7 @@
 import { createEntities } from './entities.js';
 import { updateMovement } from './systems/movement.js';
 import { updateRendering } from './systems/rendering.js';
+import { setEntities } from './state.js';
 
 export const engine = ({ BABYLON, canvas, displays, currentDisplayId }) => {
   const babylonEngine = new BABYLON.Engine(canvas, true);
@@ -32,6 +33,8 @@ export const engine = ({ BABYLON, canvas, displays, currentDisplayId }) => {
   );
 
   const entities = createEntities({ BABYLON, scene, spriteManager });
+  setEntities(entities); // Share entities
+  
   const systems = [
     updateMovement,
     updateRendering({ BABYLON, scene, camera, canvas }),
