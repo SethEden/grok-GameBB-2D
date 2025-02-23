@@ -1,1 +1,1 @@
-export const createPosition = (x, y, z) => ({ x, y, z });
+export const createPosition = (x, y) => ({ x, y });

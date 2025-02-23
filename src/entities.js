@@ -2,21 +2,17 @@ import { createPosition } from './components/position.js';
 import { createVelocity } from './components/velocity.js';
 import { createRenderable } from './components/renderable.js';
 
-export const createEntities = ({ BABYLON, scene }) => {
+export const createEntities = ({ BABYLON, scene, spriteManager }) => {
   const player = {
-    position: createPosition(0, 0, 0),
-    velocity: createVelocity(0, 0, 0), // Stationary for now, can be controlled later
-    renderable: createRenderable({ BABYLON, scene, type: 'box', size: 1 }),
+    position: createPosition(0, 0),
+    velocity: createVelocity(0, 0), // Stationary, we’ll add mouse control later
+    renderable: createRenderable({ BABYLON, scene, spriteManager, type: 'sprite', size: 64 }),
   };
 
-  const cube = {
-    position: createPosition(5, 0, 0), // Offset so it’s distinct from player
-    // No velocity, making it static
-    renderable: createRenderable({ BABYLON, scene, type: 'box', size: 2 }),
+  const obstacle = {
+    position: createPosition(500, 0), // Offset further for wide scrolling
+    renderable: createRenderable({ BABYLON, scene, spriteManager, type: 'square', size: 100 }),
   };
 
-  console.log('Player mesh position:', player.renderable.mesh.position);
-  console.log('Cube mesh position:', cube.renderable.mesh.position);
-
-  return [player, cube];
+  return [player, obstacle];
 };

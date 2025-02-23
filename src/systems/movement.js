@@ -1,9 +1,8 @@
-export const updateMovement = (entities) => {
+export const updateMovement = (entities, delta) => {
   entities.forEach(entity => {
     if (entity.position && entity.velocity) {
-      entity.position.x += entity.velocity.vx;
-      entity.position.y += entity.velocity.vy;
-      entity.position.z += entity.velocity.vz;
+      entity.position.x += entity.velocity.vx * delta;
+      entity.position.y += entity.velocity.vy * delta;
     }
   });
 };

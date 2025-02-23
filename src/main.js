@@ -9,11 +9,9 @@ const __dirname = path.dirname(__filename);
 // Store all windows
 const windows = [];
 
-// Create a window for each display
 const createWindows = async () => {
-  const { screen } = await import('electron'); // Dynamic import for screen
+  const { screen } = await import('electron');
   const displays = screen.getAllDisplays();
-  console.log('Detected displays:', displays);
 
   displays.forEach((display, index) => {
     const window = new BrowserWindow({
@@ -27,10 +25,10 @@ const createWindows = async () => {
       },
     });
 
-    window.loadURL(new URL(`file://${path.join(__dirname, '../public/index.html')}`).href);
+    window.loadURL(
+      new URL(`file://${path.join(__dirname, '../public/index.html')}`).href
+    );
 
-    // Open DevTools for debugging
-    window.webContents.openDevTools();
     windows.push({ window, displayId: index, bounds: display.bounds });
   });
 
@@ -48,10 +46,9 @@ const createWindows = async () => {
 };
 
 app.whenReady().then(() => {
-  console.log('App is ready');
-  createWindows().then(() => {
-    console.log('Windows created:', windows.length);
-  }).catch(err => console.error('Error creating windows:', err));
+  createWindows().catch(err => {
+    throw new Error(`Failed to create windows: ${err}`);
+  });
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
@@ -60,6 +57,8 @@ app.whenReady().then(() => {
 
 app.on('activate', () => {
   if (windows.length === 0) {
-    createWindows().catch(err => console.error('Error on activate:', err));
+    createWindows().catch(err => {
+      throw new Error(`Failed to recreate windows: ${err}`);
+    });
   }
 });
