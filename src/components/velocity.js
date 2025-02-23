@@ -1,0 +1,1 @@
+export const createVelocity = (vx, vy, vz) => ({ vx, vy, vz });
