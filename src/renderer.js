@@ -26,23 +26,6 @@ ipcRenderer.on('display-info', (event, { displays, currentDisplayId }) => {
   const startEngine = engine({ BABYLON, canvas, displays, currentDisplayId });
   startEngine();
 
-  canvas.addEventListener('mousemove', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    const worldWidth = displays.reduce((sum, d) => sum + d.bounds.width, 0);
-    const worldHeight = displays[0].bounds.height;
-    const x = (mouseX / canvas.width) * displays[currentDisplayId].bounds.width +
-              displays.filter(d => d.id < currentDisplayId).reduce((sum, d) => sum + d.bounds.width, 0) -
-              worldWidth / 2;
-    const y = -(mouseY / canvas.height) * worldHeight + worldHeight / 2;
-
-    updatePlayerPosition(x, y);
-    ipcRenderer.send('update-player-position', { x, y }); // Send to main
-  });
-
-  // Receive updates from other windows
   ipcRenderer.on('player-position', (event, { x, y }) => {
     updatePlayerPosition(x, y);
   });

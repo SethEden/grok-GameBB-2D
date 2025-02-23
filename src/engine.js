@@ -1,6 +1,7 @@
 import { createEntities } from './entities.js';
 import { updateMovement } from './systems/movement.js';
 import { updateRendering } from './systems/rendering.js';
+import { setupInput, updateInput } from './systems/input.js';
 import { setEntities } from './state.js';
 
 export const engine = ({ BABYLON, canvas, displays, currentDisplayId }) => {
@@ -16,29 +17,23 @@ export const engine = ({ BABYLON, canvas, displays, currentDisplayId }) => {
   const currentDisplay = displays.find(d => d.id === currentDisplayId);
   const worldWidth = totalWidth;
   const screenWidth = currentDisplay.bounds.width;
-  const offset = displays
-    .filter(d => d.id < currentDisplayId)
-    .reduce((sum, d) => sum + d.bounds.width, 0);
+  const offset = displays.filter(d => d.id < currentDisplayId).reduce((sum, d) => sum + d.bounds.width, 0);
   camera.orthoLeft = offset - worldWidth / 2;
   camera.orthoRight = offset + screenWidth - worldWidth / 2;
   camera.orthoBottom = -currentDisplay.bounds.height / 2;
   camera.orthoTop = currentDisplay.bounds.height / 2;
 
-  const spriteManager = new BABYLON.SpriteManager(
-    'sprites',
-    'assets/sprites.png',
-    100,
-    64,
-    scene
-  );
-
+  const spriteManager = new BABYLON.SpriteManager('sprites', 'assets/sprites.png', 100, 64, scene);
   const entities = createEntities({ BABYLON, scene, spriteManager });
-  setEntities(entities); // Share entities
-  
+  setEntities(entities);
+
   const systems = [
     updateMovement,
     updateRendering({ BABYLON, scene, camera, canvas }),
+    updateInput,
   ];
+
+  setupInput(entities, { canvas, displays, currentDisplayId }); // One-time setup
 
   let lastTime = performance.now();
   const run = () => {
@@ -47,10 +42,10 @@ export const engine = ({ BABYLON, canvas, displays, currentDisplayId }) => {
       const delta = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
 
-      systems[0](entities, delta);
+      systems[0](entities, delta, { worldWidth, worldHeight: currentDisplay.bounds.height });
       systems[1](entities);
+      systems[2](entities); // Empty for now
       scene.render();
-      console.log('Rendering frame for display', currentDisplayId); // Add back for debug
     };
     babylonEngine.runRenderLoop(loop);
   };
