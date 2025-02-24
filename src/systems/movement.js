@@ -1,3 +1,5 @@
+import { ipcRenderer } from 'electron';
+
 export const updateMovement = (entities, delta, config = {}) => {
   const { worldWidth = 5760, worldHeight = 1080, wrap = false } = config; // Defaults for 3x1920 monitors
   entities.forEach(entity => {
@@ -13,5 +15,6 @@ export const updateMovement = (entities, delta, config = {}) => {
         entity.position.y = Math.max(-worldHeight / 2, Math.min(worldHeight / 2, entity.position.y));
       }
     }
+    ipcRenderer.send('log', `entity.position.x,y at ${entity.position.x}, ${entity.position.y}`);
   });
 };

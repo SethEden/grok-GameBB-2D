@@ -34,6 +34,7 @@ const createGameWindows = async () => {
   const displays = screen.getAllDisplays();
 
   displays.forEach((display, index) => {
+    console.log(`Display ${index}: ID ${display.id}, Bounds ${display.bounds.x}, ${display.bounds.y}`);
     const window = new BrowserWindow({
       x: display.bounds.x,
       y: display.bounds.y,
@@ -87,6 +88,10 @@ app.whenReady().then(() => {
         window.webContents.send('player-position', { x, y });
       }
     });
+  });
+
+  ipcMain.on('log', (event, message) => {
+    console.log(message); // Keep this beauty
   });
 
   app.on('window-all-closed', () => {
